@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robbie's Weather Board · 固件安装</title>
+<meta name="description" content="4.2 寸黑白墨水屏天气看板 · 网页一键刷机">
+<script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>
+<style>
+  :root {
+    --paper: #F3F1EA;
+    --card: #FFFFFF;
+    --ink: #121212;
+    --ink-2: #4A4A47;
+    --ink-3: #6E6D68;
+    --rule: #DEDBD1;
+    --red: #C4161C;
+    --red-dark: #9E1116;
+    --ok: #1F6F43;
+    --num: "DIN Alternate", "Bahnschrift", "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #141413; --card: #1D1D1B; --ink: #F1EFE8; --ink-2: #C9C6BC; --ink-3: #9B988F;
+      --rule: #34332F; --red: #E5484D; --red-dark: #C4161C; --ok: #4CC38A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141413; --card: #1D1D1B; --ink: #F1EFE8; --ink-2: #C9C6BC; --ink-3: #9B988F;
+    --rule: #34332F; --red: #E5484D; --red-dark: #C4161C; --ok: #4CC38A;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
+  a { color: var(--red); text-underline-offset: 3px; }
+  a:hover { color: var(--red-dark); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* 顶栏 */
+  header.top { border-bottom: 1px solid var(--rule); }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .2px; }
+  .mark { width: 22px; height: 22px; background: var(--ink); position: relative; flex: none; }
+  .mark::after { content: ""; position: absolute; right: 0; bottom: 0; width: 9px; height: 9px; background: var(--red); }
+  .ver { font-family: var(--mono); font-size: 13px; color: var(--ink-2); border: 1px solid var(--rule); padding: 3px 10px; white-space: nowrap; }
+
+  /* 首屏 */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: center; padding: 64px 0 56px; }
+  .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 2px; color: var(--red); margin: 0 0 14px; }
+  h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; letter-spacing: -.5px; }
+  .lead { font-size: 17px; color: var(--ink-2); margin: 0 0 32px; max-width: 34em; }
+  .install { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+  .btn {
+    appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 16px;
+    background: var(--red); color: #fff; padding: 14px 28px; min-height: 48px;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn:hover { background: var(--red-dark); }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .btn svg { width: 18px; height: 18px; }
+  .env { font-size: 14px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
+  .env.ok .dot { background: var(--ok); }
+  .env.bad .dot { background: var(--red); }
+  .warn { margin-top: 18px; padding: 12px 16px; border: 1px solid var(--red); color: var(--ink); font-size: 14px; display: none; }
+  .warn.show { display: block; }
+
+  /* 设备示意 */
+  .device { background: #2A2926; padding: 18px 18px 26px; border-radius: 10px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.45); }
+  .screen { background: #ECEAE3; aspect-ratio: 4 / 3; color: #111; display: flex; flex-direction: column; overflow: hidden; font-family: var(--sans); }
+  .s-head { background: #111; color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 0 3%; height: 11.3%; font-size: clamp(10px, 1.5vw, 15px); }
+  .s-head b { font-size: 1.2em; }
+  .s-head small { font-size: .78em; opacity: .9; }
+  .chip { background: #fff; color: #111; padding: 0 .4em; font-weight: 700; }
+  .s-num { font-family: var(--num); font-weight: 700; color: #B3141A; padding: 1% 3% 0; font-size: clamp(34px, 5.6vw, 58px); line-height: 1; }
+  .s-chg { font-family: var(--num); font-weight: 700; color: #B3141A; padding: 1% 3% 0; font-size: clamp(14px, 2.2vw, 22px); }
+  .s-chart { flex: 1; padding: 1% 3% 0; min-height: 0; }
+  .s-chart svg { width: 100%; height: 100%; display: block; }
+  .s-foot { border-top: 2px solid #111; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 1.2% 3% 1.8%; font-size: clamp(9px, 1.1vw, 11px); font-weight: 700; }
+  .s-foot span { display: block; font-family: var(--num); font-size: 1.45em; }
+  .s-foot .r { color: #B3141A; }
+  .screen.wx .s-head { height: 9%; }
+  .wx-body { flex: 1; display: grid; grid-template-columns: 40% 60%; min-height: 0; padding: 2% 0 2%; }
+  .wx-now { border-right: 2px solid #111; padding: 0 5%; display: flex; flex-direction: column; justify-content: space-between; }
+  .wx-ic { width: 52%; margin: 0 auto; display: block; }
+  .wx-t { font-family: var(--num); font-weight: 700; font-size: clamp(36px, 5.4vw, 58px); line-height: 1; }
+  .wx-t sup { font-size: .5em; }
+  .wx-d { font-weight: 700; font-size: clamp(11px, 1.4vw, 15px); }
+  .wx-s { font-size: clamp(9px, 1.05vw, 11.5px); line-height: 1.5; }
+  .wx-list { list-style: none; margin: 0; padding: 0 3% 0 4%; display: flex; flex-direction: column; }
+  .wx-list li { flex: 1; display: grid; grid-template-columns: 26% 1fr 18%; align-items: center; border-bottom: 1px dotted #111; font-size: clamp(10px, 1.3vw, 14px); }
+  .wx-list li:last-child { border-bottom: 0; }
+  .wx-list i { font-style: normal; text-align: right; font-family: var(--num); }
+  .caption { margin-top: 12px; font-size: 13px; color: var(--ink-3); text-align: center; }
+
+  /* 区块 */
+  section { padding: 48px 0; border-top: 1px solid var(--rule); }
+  h2 { font-size: 22px; margin: 0 0 24px; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: s; }
+  .steps li { background: var(--card); border: 1px solid var(--rule); padding: 24px; counter-increment: s; }
+  .steps li::before { content: counter(s, decimal-leading-zero); display: block; font-family: var(--num); font-weight: 700; font-size: 28px; color: var(--red); line-height: 1; margin-bottom: 14px; }
+  .steps h3 { margin: 0 0 6px; font-size: 17px; }
+  .steps p { margin: 0; color: var(--ink-2); font-size: 15px; }
+  code, .ssid { font-family: var(--mono); font-size: .92em; background: var(--paper); border: 1px solid var(--rule); padding: 1px 6px; }
+
+  .specs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--rule); background: var(--card); margin: 0; }
+  .specs div { padding: 20px 22px; border-right: 1px solid var(--rule); }
+  .specs div:last-child { border-right: 0; }
+  .specs dt { font-size: 13px; color: var(--ink-3); margin-bottom: 6px; }
+  .specs dd { margin: 0; font-weight: 700; }
+
+  .faq details { background: var(--card); border: 1px solid var(--rule); margin-bottom: 10px; }
+  .faq summary { cursor: pointer; padding: 16px 20px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 16px; min-height: 48px; align-items: center; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-family: var(--mono); color: var(--ink-3); font-size: 20px; }
+  .faq details[open] summary::after { content: "−"; }
+  .faq .a { padding: 0 20px 18px; color: var(--ink-2); font-size: 15px; }
+  .faq .a p { margin: 0 0 8px; }
+
+  footer { border-top: 1px solid var(--rule); padding: 28px 0 40px; font-size: 13px; color: var(--ink-3); }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: minmax(0, 1fr); gap: 40px; padding: 40px 0; }
+    h1 { font-size: 32px; }
+    .steps { grid-template-columns: minmax(0, 1fr); }
+    .specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .specs div:nth-child(2) { border-right: 0; }
+    .specs div:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 0 16px; }
+    .specs { grid-template-columns: minmax(0, 1fr); }
+    .specs div { border-right: 0; border-bottom: 1px solid var(--rule); }
+    .specs div:last-child { border-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>Robbie's Weather Board</div>
+    <span class="ver" id="ver">固件 v—</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <p class="eyebrow">固件安装</p>
+      <h1>4.2 寸墨水屏<br>天气看板</h1>
+      <p class="lead">当前天气、体感湿度、风力、日出日落与未来 6 天预报，每 30 分钟自动更新。首次用 USB 安装一次，之后通过 Wi-Fi 自动升级。</p>
+
+      <div class="install">
+        <esp-web-install-button manifest="manifest.json">
+          <button slot="activate" class="btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            连接设备并安装
+          </button>
+          <span slot="unsupported"></span>
+          <span slot="not-allowed"></span>
+        </esp-web-install-button>
+        <span class="env" id="env"><span class="dot" aria-hidden="true"></span><span id="envText">正在检测浏览器…</span></span>
+      </div>
+      <div class="warn" id="warn">当前浏览器不支持网页串口。请在<b>电脑</b>上用 <b>Chrome</b> 或 <b>Edge</b> 打开本页；手机、iPad 和 Safari 无法安装。</div>
+    </div>
+
+    <figure style="margin:0">
+      <div class="device" role="img" aria-label="天气看板显示效果示意">
+        <div class="screen wx">
+          <div class="s-head"><b>上海 &nbsp;10月28日 周三</b><small>更新 21:30</small></div>
+          <div class="wx-body">
+            <div class="wx-now">
+              <svg viewBox="0 0 100 92" class="wx-ic" aria-hidden="true"><path d="M30 60a18 18 0 0 1 0-36 26 26 0 0 1 48 6 18 18 0 0 1 0 30z" fill="none" stroke="#111" stroke-width="5" stroke-linejoin="round"/><path d="M38 70l-6 16M56 70l-6 16M74 70l-6 16" stroke="#111" stroke-width="5" stroke-linecap="round"/></svg>
+              <div class="wx-t">22<sup>°</sup></div>
+              <div class="wx-d">小雨 17~23°</div>
+              <div class="wx-s">体感 22° 湿度 72%<br>东北风 3级<br>日出 06:02 日落 17:14</div>
+            </div>
+            <ul class="wx-list">
+              <li><b>周四</b><span>阵雨</span><i>18°</i></li>
+              <li><b>周五</b><span>多云</span><i>21°</i></li>
+              <li><b>周六</b><span>阴</span><i>20°</i></li>
+              <li><b>周日</b><span>晴</span><i>23°</i></li>
+              <li><b>周一</b><span>小雨</span><i>19°</i></li>
+              <li><b>周二</b><span>多云</span><i>22°</i></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <figcaption class="caption">示意图，实际以设备显示为准</figcaption>
+    </figure>
+  </div>
+
+  <section aria-labelledby="h-steps">
+    <h2 id="h-steps">三步完成</h2>
+    <ol class="steps">
+      <li>
+        <h3>连接驱动板</h3>
+        <p>用数据线把 ESP32 驱动板接到电脑，确认线材支持数据传输。</p>
+      </li>
+      <li>
+        <h3>安装固件</h3>
+        <p>点击上方按钮，选择驱动板对应的串口，确认安装，约 1 分钟完成。</p>
+      </li>
+      <li>
+        <h3>连接 Wi-Fi</h3>
+        <p>手机连接热点 <span class="ssid">Robbie's Weather Board</span>，在弹出页面选择 Wi-Fi 并输入密码。</p>
+      </li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="h-specs">
+    <h2 id="h-specs">设备概况</h2>
+    <dl class="specs">
+      <div><dt>显示内容</dt><dd>当前天气 + 未来 6 天预报</dd></div>
+      <div><dt>更新频率</dt><dd>每 30 分钟</dd></div>
+      <div><dt>显示</dt><dd>4.2 寸 400×300 黑白</dd></div>
+      <div><dt>升级方式</dt><dd>Wi-Fi 自动 OTA</dd></div>
+    </dl>
+  </section>
+
+  <section class="faq" aria-labelledby="h-faq">
+    <h2 id="h-faq">常见问题</h2>
+    <details>
+      <summary>选择串口时列表是空的</summary>
+      <div class="a">
+        <p>多数是缺少 USB 转串口驱动。按驱动板上的芯片型号安装：
+          <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank" rel="noopener">CP210x 驱动</a> 或
+          <a href="https://www.wch.cn/downloads/CH341SER_EXE.html" target="_blank" rel="noopener">CH340 驱动</a>，装好后重新插拔。</p>
+        <p>也可能是数据线只能充电，换一根数据线再试。</p>
+      </div>
+    </details>
+    <details>
+      <summary>安装过程中连接失败</summary>
+      <div class="a"><p>按住驱动板上的 <code>BOOT</code> 键不放，再点击安装，看到进度开始后松开。</p></div>
+    </details>
+    <details>
+      <summary>想更换 Wi-Fi</summary>
+      <div class="a"><p>设备正常运行时长按 <code>BOOT</code> 键 5 秒，会清除已保存的 Wi-Fi 并重新进入配网。不要在按 RST 的同时按 BOOT，那样会进入下载模式。</p></div>
+    </details>
+    <details>
+      <summary>屏幕不刷新或花屏</summary>
+      <div class="a"><p>开机画面左下角会显示识别到的屏幕驱动（UC8176 或 SSD1683）。拍下屏幕反馈即可，可通过固件强制切换驱动。</p></div>
+    </details>
+    <details>
+      <summary>安装后还需要电脑吗</summary>
+      <div class="a"><p>不需要。之后的更新会通过 Wi-Fi 自动下载安装，右上角版本号即当前最新固件。</p></div>
+    </details>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>天气数据来自 Open-Meteo，仅供参考。</span>
+    <a href="https://github.com/huwenhou/ESP32-EINK42-BW-WEATHER-OTA" target="_blank" rel="noopener">GitHub 仓库</a>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var env = document.getElementById('env');
+    var text = document.getElementById('envText');
+    var warn = document.getElementById('warn');
+    if ('serial' in navigator) {
+      env.classList.add('ok');
+      text.textContent = '浏览器支持网页刷机';
+    } else {
+      env.classList.add('bad');
+      text.textContent = '当前浏览器不支持';
+      warn.classList.add('show');
+    }
+    fetch('version.txt', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (v) { v = (v || '').trim(); if (v) document.getElementById('ver').textContent = '固件 v' + v; })
+      .catch(function () {});
+  })();
+</script>
+</body>
+</html>
