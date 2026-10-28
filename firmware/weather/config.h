@@ -4,7 +4,8 @@
 #pragma once
 
 // 固件发布地址（GitHub Pages）
-#define FW_BASE_URL "https://huwenhou.github.io/ESP32-EINK42-BW-WEATHER-OTA"
+#define FW_BASE_URL     "https://io.huwenhou.com/ESP32-EINK42-BW-WEATHER-OTA"
+#define FW_FALLBACK_URL "https://huwenhou.github.io/ESP32-EINK42-BW-WEATHER-OTA"   // 主地址连不上时用
 
 // 城市（顶栏显示名 + 经纬度）
 #define CITY_NAME "上海"

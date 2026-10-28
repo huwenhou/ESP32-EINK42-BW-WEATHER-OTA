@@ -7,7 +7,7 @@ ESP32 驱动板 + 4.2 寸黑白屏。左侧显示当前天气（图标、温度�
 - 每 10 分钟检查一次新固件，自动 OTA
 
 ## 刷机
-电脑 Chrome 打开 https://huwenhou.github.io/ESP32-EINK42-BW-WEATHER-OTA ，点安装，选驱动板串口。
+电脑 Chrome 打开 https://io.huwenhou.com/ESP32-EINK42-BW-WEATHER-OTA ，点安装，选驱动板串口。
 之后用手机连热点 **Robbie's Weather Board** 配 Wi-Fi。
 
 ## 目录
