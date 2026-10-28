@@ -18,4 +18,4 @@
 #define AP_NAME "Robbie's Weather Board"
 
 // 屏幕驱动：0 = 开机自动识别；1 = UC8176 系列（GxEPD2_420）；2 = SSD1683 系列（GDEY042T81）
-#define FORCE_PANEL 0
+#define FORCE_PANEL 2   // 已确认这块屏是 SSD1683，固定使用，避免开机误判
