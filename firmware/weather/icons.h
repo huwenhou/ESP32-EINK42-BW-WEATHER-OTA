@@ -41,8 +41,14 @@ inline void cloud(Adafruit_GFX& g, int x, int y, float u, int t, uint16_t fg, ui
   cloudFill(g, x, y, u, 0, fg);
   cloudFill(g, x, y, u, t, bg);
 }
+// 粗线：沿垂直于线的方向加厚（横线上下加厚、竖线左右加厚），并以原线为中心
 inline void thickLine(Adafruit_GFX& g, int x0, int y0, int x1, int y1, int t, uint16_t c) {
-  for (int i = 0; i < t; i++) g.drawLine(x0 + i, y0, x1 + i, y1, c);
+  bool flat = abs(x1 - x0) > abs(y1 - y0);
+  for (int i = 0; i < t; i++) {
+    int o = i - t / 2;
+    if (flat) g.drawLine(x0, y0 + o, x1, y1 + o, c);
+    else      g.drawLine(x0 + o, y0, x1 + o, y1, c);
+  }
 }
 inline void sun(Adafruit_GFX& g, int cx, int cy, int r, int t, uint16_t fg, uint16_t bg) {
   for (int k = 0; k < 8; k++) {
