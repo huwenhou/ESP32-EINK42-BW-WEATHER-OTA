@@ -278,15 +278,15 @@ int detectPanel() {
 // ---------------------------------------------------------------------
 //  OTA
 // ---------------------------------------------------------------------
-// USB 烧录（arduino-cli / 网页刷机）会把 otadata 分区擦成全 FF；
-// 只要做过一次 OTA，otadata 里就会写入有效序号。据此判断当前固件来源，
-// 不依赖旧固件配合，从旧版本 OTA 升上来也能正确识别。
+// USB 烧录（arduino-cli / 网页刷机）会写入 boot_app0.bin：otadata 两个扇区的序号固定为 1 和 0；
+// 每做一次 OTA，序号就会 +1 写进另一扇区（≥2）。据此判断当前固件来源，
+// 不依赖旧固件配合，从旧版本 OTA 升上来也能识别；之后再 USB 烧录会自动恢复。
 bool firmwareFromOta() {
   const esp_partition_t* p = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, NULL);
   if (!p) return false;
   for (uint32_t off = 0; off < 2 * 0x1000 && off < p->size; off += 0x1000) {
     uint32_t seq = 0xFFFFFFFF;
-    if (esp_partition_read(p, off, &seq, sizeof(seq)) == ESP_OK && seq != 0xFFFFFFFF) return true;
+    if (esp_partition_read(p, off, &seq, sizeof(seq)) == ESP_OK && seq != 0xFFFFFFFF && seq >= 2) return true;
   }
   return false;
 }
