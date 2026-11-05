@@ -12,6 +12,7 @@
 #include <SPI.h>
 #include <time.h>
 #include <math.h>
+#include <esp_partition.h>
 #include <ArduinoJson.h>
 #include <GxEPD2_BW.h>
 #include <U8g2_for_Adafruit_GFX.h>
@@ -62,6 +63,7 @@ struct Wx {
   bool stale;
 } wx;
 char statusL1[48], statusL2[64];
+bool viaOta = false;   // 当前固件是否经 OTA 写入（右上角显示“OTA更新”）
 unsigned long lastWx = 0, lastOta = 0;
 
 int dayOfWeek(int y, int m, int d) {          // 0=周日
@@ -172,7 +174,7 @@ void drawWeather() {
   const Day& d0 = wx.day[0];
   snprintf(buf, sizeof(buf), "%s  %d月%d日 %s", CITY_NAME, d0.m, d0.d, WEEK[dayOfWeek(d0.y, d0.m, d0.d)]);
   cn(10, 20, buf, CN_L, WHITE, true);
-  snprintf(buf, sizeof(buf), wx.stale ? "离线 %s" : "更新 %s", wx.updated);
+  snprintf(buf, sizeof(buf), wx.stale ? "离线 %s" : (viaOta ? "OTA更新 %s" : "更新 %s"), wx.updated);
   cnR(390, 20, buf, CN_M, WHITE);
 
   // --- 左：当前 ---
@@ -276,6 +278,19 @@ int detectPanel() {
 // ---------------------------------------------------------------------
 //  OTA
 // ---------------------------------------------------------------------
+// USB 烧录（arduino-cli / 网页刷机）会把 otadata 分区擦成全 FF；
+// 只要做过一次 OTA，otadata 里就会写入有效序号。据此判断当前固件来源，
+// 不依赖旧固件配合，从旧版本 OTA 升上来也能正确识别。
+bool firmwareFromOta() {
+  const esp_partition_t* p = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, NULL);
+  if (!p) return false;
+  for (uint32_t off = 0; off < 2 * 0x1000 && off < p->size; off += 0x1000) {
+    uint32_t seq = 0xFFFFFFFF;
+    if (esp_partition_read(p, off, &seq, sizeof(seq)) == ESP_OK && seq != 0xFFFFFFFF) return true;
+  }
+  return false;
+}
+
 // 依次尝试主地址（自定义域名）和备用地址（github.io），返回可用地址的版本号
 const char* OTA_BASES[] = { FW_BASE_URL, FW_FALLBACK_URL };
 long fetchRemoteVersion(const char* base) {
@@ -335,6 +350,8 @@ void refreshWeather() {
 void setup() {
   Serial.begin(115200);
   pinMode(BOOT_BTN, INPUT_PULLUP);
+  viaOta = firmwareFromOta();
+  Serial.printf("FW v%d, via %s\n", FW_VERSION, viaOta ? "OTA" : "USB");
   panel = detectPanel();
   SPI.end();
   SPI.begin(EPD_SCK, 12, EPD_MOSI, EPD_CS);
