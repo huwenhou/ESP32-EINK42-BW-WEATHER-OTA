@@ -39,13 +39,14 @@ jobs:
           arduino-cli core install esp32:esp32
           arduino-cli lib install "GxEPD2" "Adafruit GFX Library" "WiFiManager" "U8g2_for_Adafruit_GFX" "ArduinoJson"
 
-      - name: Generate Barlow digit font
+      - name: Generate Barlow digit fonts
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq libfreetype-dev
           FC=$(find ~/Arduino/libraries -path "*fontconvert/fontconvert.c" | head -1)
           gcc -O2 -I/usr/include/freetype2 "$FC" -lfreetype -o fontconvert
           curl -sSL -o Barlow-Bold.ttf https://github.com/google/fonts/raw/main/ofl/barlow/Barlow-Bold.ttf
           ./fontconvert Barlow-Bold.ttf 33 32 58 > firmware/weather/Barlow_Bold33pt7b.h
+          ./fontconvert Barlow-Bold.ttf 14 32 126 > firmware/weather/Barlow_Bold14pt7b.h
           head -c 200 firmware/weather/Barlow_Bold33pt7b.h
 
       - name: Compile

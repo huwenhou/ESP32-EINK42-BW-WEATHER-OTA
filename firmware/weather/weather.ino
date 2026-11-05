@@ -22,10 +22,12 @@
 #include "config.h"
 #include "icons.h"
 #include "Barlow_Bold33pt7b.h"   // CI 生成
+#include "Barlow_Bold14pt7b.h"   // CI 生成（未来 6 天温度）
 
 typedef void (*DrawFn)();
 
 #define NUM_XL &Barlow_Bold33pt7b
+#define NUM_M  &Barlow_Bold14pt7b
 #define CN_L u8g2_font_wqy16_t_gb2312
 #define CN_M u8g2_font_wqy14_t_gb2312
 
@@ -186,9 +188,12 @@ void drawWeather() {
   G->setFont(NUM_XL);
   G->setTextColor(BLACK);
   G->setTextWrap(false);
-  G->setCursor(14, 174);
+  // 数字 + 度数圈 整体在左栏（0~161）内水平居中
+  int tw = numW(buf, NUM_XL) + 9 + 8;
+  int tx = (161 - tw) / 2;
+  G->setCursor(tx, 174);
   G->print(buf);
-  int dx = 14 + numW(buf, NUM_XL) + 9;     // 度数圈
+  int dx = tx + numW(buf, NUM_XL) + 9;     // 度数圈
   G->fillCircle(dx, 136, 8, BLACK);
   G->fillCircle(dx, 136, 4, WHITE);
 
@@ -205,11 +210,7 @@ void drawWeather() {
 
   G->fillRect(161, 33, 2, 260, BLACK);
 
-  // --- 右：未来 6 天 ---
-  float wkMin = 1e9, wkMax = -1e9;
-  for (int i = 1; i < wx.nDays; i++) { wkMin = fminf(wkMin, wx.day[i].tmin); wkMax = fmaxf(wkMax, wx.day[i].tmax); }
-  if (wkMax - wkMin < 1) wkMax = wkMin + 1;
-  const int BX0 = 326, BX1 = 358;
+  // --- 右：未来 6 天（温度用大号数字 "低~高°"，右对齐）---
   for (int i = 1; i < wx.nDays && i <= 6; i++) {
     const Day& d = wx.day[i];
     int top = 31 + (i - 1) * 44;
@@ -220,16 +221,15 @@ void drawWeather() {
     drawWIcon(*G, w.icon, 212, top + 7, 34, BLACK, WHITE);
     cn(252, top + 28, w.text, CN_L);
 
-    snprintf(buf, sizeof(buf), "%d°", r0(d.tmin));
-    cnR(BX0 - 3, top + 28, buf, CN_M);
-    int by = top + 22;
-    G->drawFastHLine(BX0, by, BX1 - BX0, BLACK);
-    int a = BX0 + (int)((d.tmin - wkMin) / (wkMax - wkMin) * (BX1 - BX0));
-    int b = BX0 + (int)((d.tmax - wkMin) / (wkMax - wkMin) * (BX1 - BX0));
-    if (b - a < 5) { a = min(a, BX1 - 5); b = a + 5; }
-    G->fillRoundRect(a, by - 3, b - a, 7, 3, BLACK);
-    snprintf(buf, sizeof(buf), "%d°", r0(d.tmax));
-    cn(BX1 + 4, top + 28, buf, CN_M);
+    snprintf(buf, sizeof(buf), "%d~%d", r0(d.tmin), r0(d.tmax));
+    const int XR = 392;                       // 度数圈右边缘
+    int nx = XR - 7 - numW(buf, NUM_M);
+    G->setFont(NUM_M);
+    G->setTextColor(BLACK);
+    G->setCursor(nx, top + 31);
+    G->print(buf);
+    G->fillCircle(XR - 3, top + 15, 3, BLACK);
+    G->fillCircle(XR - 3, top + 15, 1, WHITE);
 
     if (i < 6) for (int x = 172; x < 394; x += 3) G->drawPixel(x, top + 44, BLACK);
   }
