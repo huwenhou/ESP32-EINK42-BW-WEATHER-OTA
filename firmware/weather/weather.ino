@@ -1,8 +1,9 @@
 // =====================================================================
 //  4.2" 黑白墨水屏 · 天气看板
-//  · 数据：Open-Meteo（免费、无需密钥），每 30 分钟更新
+//  · 数据：Open-Meteo（免费、无需密钥）
 //  · 左：当前天气；右：未来 6 天
-//  · 每 10 分钟检查 GitHub Pages 上的新固件，自动 OTA
+//  · 省电：每个整点醒来 → 联网取天气 → 刷屏 → 关 Wi-Fi → 深度睡眠到下个整点
+//  · 只在每天 0 点那次醒来时检查 OTA 新固件
 // =====================================================================
 #include <WiFi.h>
 #include <WiFiManager.h>
@@ -13,6 +14,7 @@
 #include <time.h>
 #include <math.h>
 #include <esp_partition.h>
+#include <esp_sleep.h>
 #include <ArduinoJson.h>
 #include <GxEPD2_BW.h>
 #include <U8g2_for_Adafruit_GFX.h>
@@ -46,25 +48,24 @@ Adafruit_GFX* G = nullptr;
 U8G2_FOR_ADAFRUIT_GFX u8f;
 const uint16_t BLACK = GxEPD_BLACK, WHITE = GxEPD_WHITE;
 
-const unsigned long OTA_INTERVAL_MS = 10UL * 60UL * 1000UL;
-const unsigned long WX_INTERVAL_MS  = (unsigned long)WEATHER_MINUTES * 60UL * 1000UL;
 
 // ---------------------------------------------------------------------
 //  天气数据
 // ---------------------------------------------------------------------
 struct Day { int y, m, d, code; float tmax, tmin; };
-struct Wx {
-  bool ok = false;
+struct Wx {               // 放在 RTC 内存里，深度睡眠后保留上一次的数据
+  bool ok;
   float temp, feels, windSpd, windDir;
   int hum, code;
   Day day[7];
   int nDays;
   char sunrise[6], sunset[6], updated[6];
   bool stale;
-} wx;
+};
+RTC_DATA_ATTR Wx wx;
+RTC_DATA_ATTR uint32_t bootCount = 0;
 char statusL1[48], statusL2[64];
 bool viaOta = false;   // 当前固件是否经 OTA 写入（右上角显示“OTA更新”）
-unsigned long lastWx = 0, lastOta = 0;
 
 int dayOfWeek(int y, int m, int d) {          // 0=周日
   static const int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
@@ -325,70 +326,72 @@ void checkForUpdate() {
   }
 }
 
-void checkResetButton() {
-  static unsigned long pressedAt = 0;
-  if (digitalRead(BOOT_BTN) == LOW) {
-    if (pressedAt == 0) pressedAt = millis();
-    if (millis() - pressedAt >= 5000) {
-      WiFiManager wm;
-      wm.resetSettings();
-      showStatus("Wi-Fi 已清除", "正在重启...");
-      delay(1000);
-      ESP.restart();
-    }
-  } else {
-    pressedAt = 0;
-  }
-}
-
 void refreshWeather() {
   if (fetchWeather()) render(drawWeather);
   else if (wx.ok) { wx.stale = true; render(drawWeather); }
-  else showStatus("天气获取失败", "稍后自动重试，请检查网络");
+  else showStatus("天气获取失败", "下个整点自动重试，请检查网络");
+}
+
+// 关 Wi-Fi，深度睡眠到下一个整点（多睡 20 秒，确保醒来时已过整点）
+void sleepUntilNextHour(bool timeOk) {
+  uint64_t sec = 3600;
+  struct tm t;
+  if (timeOk && getLocalTime(&t, 100)) sec = 3600 - (t.tm_min * 60 + t.tm_sec) + 20;
+  if (sec < 120) sec += 3600;
+  Serial.printf("sleep %llu s\n", sec);
+  Serial.flush();
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  esp_sleep_enable_timer_wakeup(sec * 1000000ULL);
+  esp_deep_sleep_start();
 }
 
 void setup() {
   Serial.begin(115200);
-  pinMode(BOOT_BTN, INPUT_PULLUP);
+  bootCount++;
+  bool timerWake = esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER;
   viaOta = firmwareFromOta();
-  Serial.printf("FW v%d, via %s\n", FW_VERSION, viaOta ? "OTA" : "USB");
+  Serial.printf("FW v%d, via %s, %s wake #%u\n", FW_VERSION, viaOta ? "OTA" : "USB",
+                timerWake ? "timer" : "power/reset", bootCount);
+
   panel = detectPanel();
   SPI.end();
   SPI.begin(EPD_SCK, 12, EPD_MOSI, EPD_CS);
-  if (panel == PANEL_SSD) { dispSSD.init(115200, true, 2, false); G = &dispSSD; }
-  else                    { dispUC.init(115200, true, 2, false);  G = &dispUC; }
+  // 定时唤醒时屏幕内容还在，init 不需要先清屏
+  if (panel == PANEL_SSD) { dispSSD.init(115200, !timerWake, 2, false); G = &dispSSD; }
+  else                    { dispUC.init(115200, !timerWake, 2, false);  G = &dispUC; }
   u8f.begin(*G);
 
-  showStatus("正在连接 Wi-Fi", "首次使用请用手机连接热点配网");
   WiFiManager wm;
-  wm.setAPCallback([](WiFiManager*) {
-    showStatus("请连接热点 " AP_NAME, "在弹出的页面里选择 Wi-Fi 并输入密码");
-  });
-  wm.setConfigPortalTimeout(300);
-  if (!wm.autoConnect(AP_NAME)) {
-    showStatus("Wi-Fi 连接失败", "正在重启...");
-    delay(3000);
-    ESP.restart();
+  bool connected;
+  if (timerWake) {
+    // 定时唤醒：只用已保存的 Wi-Fi，连不上就算了，不开热点（省电）
+    wm.setEnableConfigPortal(false);
+    wm.setConnectTimeout(20);
+    connected = wm.autoConnect(AP_NAME);
+  } else {
+    // 上电 / 按 RESET：连不上就开热点配网
+    showStatus("正在连接 Wi-Fi", "首次使用请用手机连接热点配网");
+    wm.setAPCallback([](WiFiManager*) {
+      showStatus("请连接热点 " AP_NAME, "在弹出的页面里选择 Wi-Fi 并输入密码");
+    });
+    wm.setConfigPortalTimeout(300);
+    connected = wm.autoConnect(AP_NAME);
   }
-  configTzTime("CST-8", "ntp.aliyun.com", "ntp.tencent.com", "cn.pool.ntp.org");
-  struct tm t; getLocalTime(&t, 8000);
 
-  checkForUpdate();
-  lastOta = millis();
-  refreshWeather();
-  lastWx = millis();
-}
-
-void loop() {
-  checkResetButton();
-  unsigned long interval = wx.ok ? WX_INTERVAL_MS : 60UL * 1000UL;
-  if (millis() - lastWx >= interval) {
-    lastWx = millis();
+  bool timeOk = false;
+  if (connected) {
+    configTzTime("CST-8", "ntp.aliyun.com", "ntp.tencent.com", "cn.pool.ntp.org");
+    struct tm t;
+    timeOk = getLocalTime(&t, 8000);
+    // 每天只在 0 点这次唤醒时检查新固件
+    if (timeOk && t.tm_hour == 0) checkForUpdate();
     refreshWeather();
+  } else {
+    if (wx.ok) { wx.stale = true; render(drawWeather); }
+    else showStatus("Wi-Fi 连接失败", "下个整点自动重试；按 RESET 可重新配网");
   }
-  if (millis() - lastOta >= OTA_INTERVAL_MS) {
-    lastOta = millis();
-    checkForUpdate();
-  }
-  delay(100);
+  sleepUntilNextHour(timeOk);
 }
+
+void loop() {}

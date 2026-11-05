@@ -13,7 +13,7 @@
 #define CITY_LON  "121.47"
 
 // 天气刷新间隔（分钟）
-#define WEATHER_MINUTES 30
+#define WEATHER_MINUTES 60   // 固定为整点刷新（深度睡眠），此项仅作说明
 
 // 配网热点名
 #define AP_NAME "Robbie's Weather Board"
