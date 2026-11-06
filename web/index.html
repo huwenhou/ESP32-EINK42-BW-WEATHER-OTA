@@ -85,14 +85,14 @@
   .wx-body { flex: 1; display: grid; grid-template-columns: 40% 60%; min-height: 0; padding: 2% 0 2%; }
   .wx-now { border-right: 2px solid #111; padding: 0 5%; display: flex; flex-direction: column; justify-content: space-between; }
   .wx-ic { width: 52%; margin: 0 auto; display: block; }
-  .wx-t { font-family: var(--num); font-weight: 700; font-size: clamp(36px, 5.4vw, 58px); line-height: 1; }
+  .wx-t { font-family: var(--num); font-weight: 700; font-size: clamp(36px, 5.4vw, 58px); line-height: 1; text-align: center; }
   .wx-t sup { font-size: .5em; }
   .wx-d { font-weight: 700; font-size: clamp(11px, 1.4vw, 15px); }
   .wx-s { font-size: clamp(9px, 1.05vw, 11.5px); line-height: 1.5; }
   .wx-list { list-style: none; margin: 0; padding: 0 3% 0 4%; display: flex; flex-direction: column; }
-  .wx-list li { flex: 1; display: grid; grid-template-columns: 26% 1fr 18%; align-items: center; border-bottom: 1px dotted #111; font-size: clamp(10px, 1.3vw, 14px); }
+  .wx-list li { flex: 1; display: grid; grid-template-columns: 22% 1fr 38%; align-items: center; border-bottom: 1px dotted #111; font-size: clamp(10px, 1.3vw, 14px); }
   .wx-list li:last-child { border-bottom: 0; }
-  .wx-list i { font-style: normal; text-align: right; font-family: var(--num); }
+  .wx-list i { font-style: normal; text-align: right; font-family: var(--num); font-weight: 700; font-size: 1.45em; white-space: nowrap; }
   .caption { margin-top: 12px; font-size: 13px; color: var(--ink-3); text-align: center; }
 
   /* 区块 */
@@ -152,7 +152,7 @@
     <div>
       <p class="eyebrow">固件安装</p>
       <h1>4.2 寸墨水屏<br>天气看板</h1>
-      <p class="lead">当前天气、体感湿度、风力、日出日落与未来 6 天预报，每 30 分钟自动更新。首次用 USB 安装一次，之后通过 Wi-Fi 自动升级。</p>
+      <p class="lead">当前天气、体感湿度、风力、日出日落与未来 6 天预报，每小时整点自动更新，更新完即断网休眠，非常省电。首次用 USB 安装一次，之后每天 0 点通过 Wi-Fi 自动升级。</p>
 
       <div class="install">
         <esp-web-install-button manifest="manifest.json">
@@ -180,12 +180,12 @@
               <div class="wx-s">体感 22° 湿度 72%<br>东北风 3级<br>日出 06:02 日落 17:14</div>
             </div>
             <ul class="wx-list">
-              <li><b>周四</b><span>阵雨</span><i>18°</i></li>
-              <li><b>周五</b><span>多云</span><i>21°</i></li>
-              <li><b>周六</b><span>阴</span><i>20°</i></li>
-              <li><b>周日</b><span>晴</span><i>23°</i></li>
-              <li><b>周一</b><span>小雨</span><i>19°</i></li>
-              <li><b>周二</b><span>多云</span><i>22°</i></li>
+              <li><b>周四</b><span>阵雨</span><i>15~18°</i></li>
+              <li><b>周五</b><span>多云</span><i>16~21°</i></li>
+              <li><b>周六</b><span>阴</span><i>16~20°</i></li>
+              <li><b>周日</b><span>晴</span><i>15~23°</i></li>
+              <li><b>周一</b><span>小雨</span><i>16~19°</i></li>
+              <li><b>周二</b><span>多云</span><i>17~22°</i></li>
             </ul>
           </div>
         </div>
@@ -216,9 +216,9 @@
     <h2 id="h-specs">设备概况</h2>
     <dl class="specs">
       <div><dt>显示内容</dt><dd>当前天气 + 未来 6 天预报</dd></div>
-      <div><dt>更新频率</dt><dd>每 30 分钟</dd></div>
+      <div><dt>更新频率</dt><dd>每小时整点</dd></div>
       <div><dt>显示</dt><dd>4.2 寸 400×300 黑白</dd></div>
-      <div><dt>升级方式</dt><dd>Wi-Fi 自动 OTA</dd></div>
+      <div><dt>升级方式</dt><dd>每天 0 点自动 OTA</dd></div>
     </dl>
   </section>
 
@@ -239,7 +239,7 @@
     </details>
     <details>
       <summary>想更换 Wi-Fi</summary>
-      <div class="a"><p>设备正常运行时长按 <code>BOOT</code> 键 5 秒，会清除已保存的 Wi-Fi 并重新进入配网。不要在按 RST 的同时按 BOOT，那样会进入下载模式。</p></div>
+      <div class="a"><p>按一下 <code>RESET</code>：如果连不上已保存的 Wi-Fi，设备会自动开启热点 Robbie's Weather Board 重新配网。如果旧 Wi-Fi 仍然可用但想换一个，用本页重新安装一次即可（会清除设置）。</p></div>
     </details>
     <details>
       <summary>屏幕不刷新或花屏</summary>
@@ -247,7 +247,7 @@
     </details>
     <details>
       <summary>安装后还需要电脑吗</summary>
-      <div class="a"><p>不需要。之后的更新会通过 Wi-Fi 自动下载安装，右上角版本号即当前最新固件。</p></div>
+      <div class="a"><p>不需要。设备每天 0 点检查新固件并通过 Wi-Fi 自动安装，安装后右上角显示「OTA更新」；用 USB 安装时显示「更新」。</p></div>
     </details>
   </section>
 </main>
