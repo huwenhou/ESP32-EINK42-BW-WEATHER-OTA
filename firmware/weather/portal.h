@@ -34,48 +34,42 @@ String esc(const String& s) {
 
 const char PAGE_HEAD[] PROGMEM = R"HTML(<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Wi-Fi · Robbie's Weather Board</title>
+<title>连接 Wi-Fi · Robbie's Weather Board</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#F2F2F7;color:#000;font:17px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-main{max-width:480px;margin:0 auto;padding:28px 16px 28px}
-h1{margin:0 0 4px 4px;font-size:34px}.sub{margin:0 0 18px 4px;font-size:13px;color:#6C6C70}
-.cap{font-size:13px;color:#6C6C70;margin:18px 0 6px 16px}.cap:first-of-type{margin-top:0}
-.grp{background:#fff;border-radius:12px;overflow:hidden}
-.row{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 16px;border-bottom:.5px solid #E5E5EA;cursor:pointer}
-.row:last-child{border-bottom:0}.row input{position:absolute;opacity:0;pointer-events:none}
-.ck{width:18px;color:#0063D1;font-weight:600;visibility:hidden}input:checked+.ck{visibility:visible}
-.n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.oth{color:#0063D1;padding-left:44px}
-.f{display:flex;align-items:center;min-height:48px;padding:0 16px;gap:12px;border-bottom:.5px solid #E5E5EA}.f:last-child{border-bottom:0}
-.f label{width:64px;flex:none}.f input{flex:1;border:0;outline:0;font:inherit;height:44px;background:transparent;min-width:0}
-button,.btn{display:block;width:100%;margin-top:22px;height:50px;border:0;border-radius:12px;background:#0063D1;color:#fff;font-weight:600;font-size:17px;font-family:inherit;text-align:center;line-height:50px;text-decoration:none}
-.foot{margin-top:18px;font-size:12px;color:#6C6C70;text-align:center}.foot a{color:#0063D1;text-decoration:none}
-.msg{text-align:center;padding-top:60px}.msg h1{margin:18px 0 8px}.msg p{color:#3C3C43;line-height:1.6;margin:0}
-.spin{width:44px;height:44px;margin:0 auto;border:4px solid #D1D1D6;border-top-color:#0063D1;border-radius:50%;animation:s 1s linear infinite}@keyframes s{to{transform:rotate(1turn)}}
-#manual{display:none}
+*{box-sizing:border-box}body{margin:0;background:#F3F1EA;color:#121212;font:16px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:480px;margin:0 auto;padding:40px 20px 28px;min-height:100vh;display:flex;flex-direction:column;gap:24px}
+.k{font-size:13px;font-weight:600;color:#C4161C;letter-spacing:.04em}h1{margin:4px 0 6px;font-size:30px;line-height:1.25}.lead{margin:0;color:#4A4A47;font-size:15px}
+.card{background:#fff;border-radius:14px;overflow:hidden}
+details{border-bottom:1px solid #ECE9E0}details:last-child{border-bottom:0}
+summary{list-style:none;display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;cursor:pointer}summary::-webkit-details-marker{display:none}
+.n{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.oth summary{color:#4A4A47;font-size:15px}
+form{display:flex;flex-direction:column;gap:12px;padding:4px 16px 16px}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#4A4A47}
+input{height:48px;border:1.5px solid #121212;border-radius:10px;padding:0 14px;font:inherit;font-size:17px;background:#fff;color:#121212;width:100%}
+button,.btn{height:50px;border:0;border-radius:10px;background:#C4161C;color:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer;display:block;text-align:center;line-height:50px;text-decoration:none}
+.foot{margin-top:auto;display:flex;justify-content:space-between;font-size:12px;color:#6E6D68}.foot a{color:#C4161C;text-decoration:none}
+.msg{text-align:center;margin-top:40px}.msg h1{margin:18px 0 8px}.msg p{color:#4A4A47;margin:0 0 24px}
+.spin{width:44px;height:44px;margin:0 auto;border:4px solid #DEDBD1;border-top-color:#C4161C;border-radius:50%;animation:s 1s linear infinite}@keyframes s{to{transform:rotate(1turn)}}
 </style></head><body><main>)HTML";
 
 const char PAGE_FORM[] PROGMEM = R"HTML(
-<h1>Wi-Fi</h1><p class="sub">为 Robbie's Weather Board 选择一个网络</p>
-<form method="post" action="/join" autocomplete="off">
-<div class="cap">网络</div><div class="grp">%LIST%
-<label class="row oth"><input type="radio" name="s" value="" id="o">其他…</label></div>
-<div class="grp" id="manual" style="margin-top:10px"><div class="f"><label for="m">名称</label><input id="m" name="m" placeholder="网络名称"></div></div>
-<div class="cap" id="pc">密码</div>
-<div class="grp"><div class="f"><label for="p">密码</label><input id="p" name="p" type="password" placeholder="开放网络可留空"></div></div>
-<button type="submit">加入</button></form>
-<p class="foot">天气看板 · 固件 v%VER% · <a href="/scan">重新扫描</a></p>
+<div><div class="k">ROBBIE'S WEATHER BOARD</div><h1>连接 Wi-Fi</h1><p class="lead">选择家里的网络，天气看板会每小时自动更新。</p></div>
+<div class="card">%LIST%
+<details class="oth"><summary>其他网络（手动输入名称）…</summary><form method="post" action="/join" autocomplete="off">
+<label>网络名称<input name="s" required></label><label>密码<input name="p" type="password" placeholder="开放网络可留空"></label><button>连接</button></form></details>
+</div>
+<div class="foot"><span>固件 v%VER%</span><a href="/scan">重新扫描</a></div>
 <script>
-var f=document.forms[0],man=document.getElementById('manual'),pc=document.getElementById('pc');
-f.addEventListener('change',function(e){if(e.target.name!='s')return;var v=e.target.value;
-man.style.display=v?'none':'block';pc.textContent=v?'输入“'+v+'”的密码':'密码';if(!v)document.getElementById('m').focus();});
-f.addEventListener('submit',function(e){var c=f.querySelector('input[name=s]:checked');if(!c||(!c.value&&!f.m.value)){e.preventDefault();alert('请先选择一个网络');}});
+var ds=document.querySelectorAll('details');
+ds.forEach(function(d){d.addEventListener('toggle',function(){if(!d.open)return;
+ds.forEach(function(o){if(o!==d)o.open=false});var i=d.querySelector('input:not([type=hidden])');if(i)setTimeout(function(){i.focus()},50);});});
 </script>)HTML";
 
 const char PAGE_WAIT[] PROGMEM = R"HTML(
 <div class="msg"><div class="spin" id="sp"></div><h1 id="t">正在连接…</h1><p id="d">%SSID%</p><a class="btn" id="b" href="/" style="display:none">返回</a></div>
 <script>
 function q(){fetch('/status').then(function(r){return r.text()}).then(function(s){
-if(s=='ok'){sp.outerHTML='<svg width="72" height="72" viewBox="0 0 72 72"><circle cx="36" cy="36" r="34" fill="none" stroke="#34C759" stroke-width="3"/><path d="M22 37l9 9 19-20" fill="none" stroke="#34C759" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+if(s=='ok'){sp.outerHTML='<svg width="72" height="72" viewBox="0 0 72 72"><circle cx="36" cy="36" r="34" fill="none" stroke="#1F6F43" stroke-width="3"/><path d="M22 37l9 9 19-20" fill="none" stroke="#1F6F43" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 t.textContent='已连接';d.innerHTML='约 30 秒后屏幕显示天气。<br>此热点即将关闭，可以关掉这个页面了。';}
 else if(s=='fail'){sp.style.display='none';t.textContent='连接失败';d.textContent='密码不对，或者信号太弱。请返回重试。';b.style.display='block';}
 else setTimeout(q,1500);}).catch(function(){setTimeout(q,2000)});}
@@ -102,15 +96,17 @@ void scan() {
   for (int i : idx) {
     if (shown++ >= 15) break;
     int r = WiFi.RSSI(i);
-    const char* c2 = r > -75 ? "#000" : "#C7C7CC";
-    const char* c3 = r > -62 ? "#000" : "#C7C7CC";
+    const char* on = "#121212"; const char* off = "#D6D3C9";
+    const char* b2 = r > -80 ? on : off; const char* b3 = r > -70 ? on : off; const char* b4 = r > -60 ? on : off;
+    bool locked = WiFi.encryptionType(i) != WIFI_AUTH_OPEN;
     String s = esc(WiFi.SSID(i));
-    listHtml += "<label class=\"row\"><input type=\"radio\" name=\"s\" value=\"" + s + "\"><span class=\"ck\">✓</span><span class=\"n\">" + s + "</span>";
-    if (WiFi.encryptionType(i) != WIFI_AUTH_OPEN)
-      listHtml += "<svg width=\"13\" height=\"16\" viewBox=\"0 0 14 16\"><rect x=\"1\" y=\"7\" width=\"12\" height=\"8\" rx=\"2\"/><path d=\"M4 7V5a3 3 0 0 1 6 0v2\" fill=\"none\" stroke=\"#000\" stroke-width=\"1.8\"/></svg>";
-    listHtml += String("<svg width=\"18\" height=\"14\" viewBox=\"0 0 24 18\"><path d=\"M2 6a15 15 0 0 1 20 0\" fill=\"none\" stroke=\"") + c3 +
-                "\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M5.5 9.8a10 10 0 0 1 13 0\" fill=\"none\" stroke=\"" + c2 +
-                "\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><circle cx=\"12\" cy=\"15\" r=\"2\"/></svg></label>";
+    listHtml += String("<details><summary><svg width=\"20\" height=\"16\" viewBox=\"0 0 20 16\"><rect y=\"11\" width=\"3.5\" height=\"5\" rx=\"1\" fill=\"#121212\"/><rect x=\"5.5\" y=\"7.5\" width=\"3.5\" height=\"8.5\" rx=\"1\" fill=\"") + b2 +
+      "\"/><rect x=\"11\" y=\"4\" width=\"3.5\" height=\"12\" rx=\"1\" fill=\"" + b3 + "\"/><rect x=\"16.5\" width=\"3.5\" height=\"16\" rx=\"1\" fill=\"" + b4 +
+      "\"/></svg><span class=\"n\">" + s + "</span>";
+    if (locked) listHtml += "<svg width=\"14\" height=\"16\" viewBox=\"0 0 14 16\"><rect x=\"1\" y=\"7\" width=\"12\" height=\"8\" rx=\"2\" fill=\"none\" stroke=\"#6E6D68\" stroke-width=\"1.6\"/><path d=\"M4 7V5a3 3 0 0 1 6 0v2\" fill=\"none\" stroke=\"#6E6D68\" stroke-width=\"1.6\"/></svg>";
+    listHtml += "</summary><form method=\"post\" action=\"/join\" autocomplete=\"off\"><input type=\"hidden\" name=\"s\" value=\"" + s + "\">";
+    if (locked) listHtml += "<label>密码<input name=\"p\" type=\"password\" required></label>";
+    listHtml += "<button>连接</button></form></details>";
   }
   WiFi.scanDelete();
 }
@@ -140,7 +136,6 @@ void handleRoot() {
 void handleScan() { scan(); toRoot(); }
 void handleJoin() {
   String s = server.arg("s");
-  if (s.isEmpty()) s = server.arg("m");
   s.trim();
   if (s.isEmpty()) { toRoot(); return; }
   lastAct = millis();
@@ -188,8 +183,10 @@ bool run(uint32_t timeoutMs) {
   WiFi.disconnect(true, false);
   WiFi.mode(WIFI_AP_STA);
   scan();
-  WiFi.softAPConfig(AP_IP, AP_IP, IPAddress(255, 255, 255, 0));
+  // 第 5 个参数是 DHCP 下发给手机的 DNS：不填会下发 0.0.0.0，手机就查不到任何域名、不会弹页面
+  WiFi.softAPConfig(AP_IP, AP_IP, IPAddress(255, 255, 255, 0), IPAddress(192, 168, 4, 2), AP_IP);
   WiFi.softAP(AP_NAME);
+  WiFi.AP.enableDhcpCaptivePortal();   // DHCP 选项 114：iOS 14+ / Android 11+ 直接据此弹出页面
   dns.setErrorReplyCode(DNSReplyCode::NoError);
   dns.start(53, "*", AP_IP);
 
