@@ -6,7 +6,6 @@
 //  · 只在每天 0 点那次醒来时检查 OTA 新固件
 // =====================================================================
 #include <WiFi.h>
-#include <WiFiManager.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
@@ -346,6 +345,8 @@ void sleepUntilNextHour(bool timeOk) {
   esp_deep_sleep_start();
 }
 
+#include "portal.h"
+
 void setup() {
   Serial.begin(115200);
   bootCount++;
@@ -362,21 +363,18 @@ void setup() {
   else                    { dispUC.init(115200, !timerWake, 2, false);  G = &dispUC; }
   u8f.begin(*G);
 
-  WiFiManager wm;
   bool connected;
   if (timerWake) {
     // 定时唤醒：只用已保存的 Wi-Fi，连不上就算了，不开热点（省电）
-    wm.setEnableConfigPortal(false);
-    wm.setConnectTimeout(20);
-    connected = wm.autoConnect(AP_NAME);
+    connected = portal::connectSaved(20000);
   } else {
-    // 上电 / 按 RESET：连不上就开热点配网
+    // 上电 / 按 RESET：连不上就开热点配网（5 分钟无人操作则退出，下个整点再试）
     showStatus("正在连接 Wi-Fi", "首次使用请用手机连接热点配网");
-    wm.setAPCallback([](WiFiManager*) {
-      showStatus("请连接热点 " AP_NAME, "在弹出的页面里选择 Wi-Fi 并输入密码");
-    });
-    wm.setConfigPortalTimeout(300);
-    connected = wm.autoConnect(AP_NAME);
+    connected = portal::connectSaved(20000);
+    if (!connected) {
+      showStatus("请连接热点 " AP_NAME, "手机会自动弹出页面，选择 Wi-Fi 并输入密码");
+      portal::run(300000);        // 配网成功会直接重启
+    }
   }
 
   bool timeOk = false;
