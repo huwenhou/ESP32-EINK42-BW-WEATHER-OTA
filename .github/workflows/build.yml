@@ -48,6 +48,7 @@ jobs:
           ./fontconvert Barlow-Bold.ttf 33 32 58 > firmware/weather/Barlow_Bold33pt7b.h
           ./fontconvert Barlow-Bold.ttf 14 32 126 > firmware/weather/Barlow_Bold14pt7b.h
           head -c 200 firmware/weather/Barlow_Bold33pt7b.h
+          cp firmware/weather/Barlow_Bold*pt7b.h firmware/weather_old/
 
       - name: Compile
         run: |
@@ -60,6 +61,19 @@ jobs:
               exit 1
             }
           grep -E "Sketch uses|Global variables" compile.log | while IFS= read -r l; do echo "::notice::$l"; done
+
+      # 老款屏 HINK-E042A03-A1（双 SSD1608）：版本号固定在 firmware/weather_old/version.h，不走 OTA
+      - name: Compile (old panel)
+        run: |
+          set -o pipefail
+          arduino-cli compile \
+            --fqbn esp32:esp32:esp32:PartitionScheme=min_spiffs \
+            --output-dir build_old \
+            firmware/weather_old 2>&1 | tee compile_old.log || {
+              grep -iE "error|exceed|overflow|not declared|no such|no matching|was not|Sketch uses" compile_old.log | head -25 | while IFS= read -r l; do echo "::error::$l"; done
+              exit 1
+            }
+          grep -E "Sketch uses|Global variables" compile_old.log | while IFS= read -r l; do echo "::notice::old: $l"; done
 
       - name: Prepare site
         run: |
@@ -79,6 +93,21 @@ jobs:
           }
           EOF
           cp web/index.html site/index.html
+          mkdir -p site/old
+          cp build_old/weather_old.ino.merged.bin site/old/firmware.merged.bin
+          OLDVER=$(grep -oP 'FW_LABEL\s+"\K[^"]+' firmware/weather_old/version.h | grep -oP 'v\K[0-9.]+')
+          echo "$OLDVER" > site/old/version.txt
+          cat > site/old/manifest.json <<EOF
+          {
+            "name": "ESP32 墨水屏天气看板（老款屏 HINK-E042A03）",
+            "version": "$OLDVER",
+            "new_install_prompt_erase": true,
+            "builds": [
+              { "chipFamily": "ESP32",
+                "parts": [ { "path": "firmware.merged.bin", "offset": 0 } ] }
+            ]
+          }
+          EOF
 
       - uses: actions/upload-pages-artifact@v3
         with:

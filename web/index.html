@@ -66,6 +66,11 @@
   .env.bad .dot { background: var(--red); }
   .warn { margin-top: 18px; padding: 12px 16px; border: 1px solid var(--red); color: var(--ink); font-size: 14px; display: none; }
   .warn.show { display: block; }
+  .old { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--rule); }
+  .old p { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
+  .old p b { color: var(--ink); }
+  .btn2 { background: transparent; color: var(--ink); border: 2px solid var(--ink); padding: 10px 22px; min-height: 44px; font-size: 15px; }
+  .btn2:hover { background: var(--ink); color: #fff; }
 
   /* 设备示意 */
   .device { background: #2A2926; padding: 18px 18px 26px; border-radius: 10px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.45); }
@@ -166,6 +171,15 @@
         <span class="env" id="env"><span class="dot" aria-hidden="true"></span><span id="envText">正在检测浏览器…</span></span>
       </div>
       <div class="warn" id="warn">当前浏览器不支持网页串口。请在<b>电脑</b>上用 <b>Chrome</b> 或 <b>Edge</b> 打开本页；手机、iPad 和 Safari 无法安装。</div>
+
+      <div class="old">
+        <p><b>老款屏 HINK-E042A03-A1</b>（屏背面丝印 HINK-E042A03，双驱动芯片）请用这个版本 · 固件 <span id="verOld">v1.0</span> · 不自动升级，刷新约 6 秒</p>
+        <esp-web-install-button manifest="old/manifest.json">
+          <button slot="activate" class="btn btn2" type="button">安装老款屏固件</button>
+          <span slot="unsupported"></span>
+          <span slot="not-allowed"></span>
+        </esp-web-install-button>
+      </div>
     </div>
 
     <figure style="margin:0">
@@ -243,7 +257,8 @@
     </details>
     <details>
       <summary>屏幕不刷新或花屏</summary>
-      <div class="a"><p>开机画面左下角会显示识别到的屏幕驱动（UC8176 或 SSD1683）。拍下屏幕反馈即可，可通过固件强制切换驱动。</p></div>
+      <div class="a"><p>开机画面左下角会显示识别到的屏幕驱动（UC8176 或 SSD1683）。拍下屏幕反馈即可，可通过固件强制切换驱动。</p>
+        <p>如果屏背面丝印是 <code>HINK-E042A03</code>（老款双芯片屏），主固件无法驱动，请改用上方的「安装老款屏固件」。</p></div>
     </details>
     <details>
       <summary>安装后还需要电脑吗</summary>
@@ -275,6 +290,10 @@
     fetch('version.txt', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.text() : ''; })
       .then(function (v) { v = (v || '').trim(); if (v) document.getElementById('ver').textContent = '固件 v' + v; })
+      .catch(function () {});
+    fetch('old/version.txt', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (v) { v = (v || '').trim(); if (v) document.getElementById('verOld').textContent = 'v' + v; })
       .catch(function () {});
   })();
 </script>
