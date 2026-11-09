@@ -94,13 +94,15 @@ jobs:
           EOF
           cp web/index.html site/index.html
           mkdir -p site/old
+          cp build_old/weather_old.ino.bin site/old/firmware.bin
           cp build_old/weather_old.ino.merged.bin site/old/firmware.merged.bin
-          OLDVER=$(grep -oP 'FW_LABEL\s+"\K[^"]+' firmware/weather_old/version.h | grep -oP 'v\K[0-9.]+')
-          echo "$OLDVER" > site/old/version.txt
+          # 老款独立 OTA 频道：version.txt 用整数 FW_VERSION，manifest 显示 FW_LABEL 里的版本
+          grep -oP 'define FW_VERSION\s+\K[0-9]+' firmware/weather_old/version.h > site/old/version.txt
+          OLDLABEL=$(grep -oP 'FW_LABEL\s+"\K[^"]+' firmware/weather_old/version.h | grep -oP 'v\K[0-9.]+')
           cat > site/old/manifest.json <<EOF
           {
             "name": "ESP32 墨水屏天气看板（老款屏 HINK-E042A03）",
-            "version": "$OLDVER",
+            "version": "$OLDLABEL",
             "new_install_prompt_erase": true,
             "builds": [
               { "chipFamily": "ESP32",

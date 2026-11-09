@@ -173,7 +173,7 @@
       <div class="warn" id="warn">当前浏览器不支持网页串口。请在<b>电脑</b>上用 <b>Chrome</b> 或 <b>Edge</b> 打开本页；手机、iPad 和 Safari 无法安装。</div>
 
       <div class="old">
-        <p><b>老款屏 HINK-E042A03-A1</b>（屏背面丝印 HINK-E042A03，双驱动芯片）请用这个版本 · 固件 <span id="verOld">v1.0</span> · 不自动升级，刷新约 6 秒</p>
+        <p><b>老款屏 HINK-E042A03-A1</b>（屏背面丝印 HINK-E042A03，双驱动芯片）请用这个版本 · 固件 <span id="verOld">v1.1</span> · 每天 0 点自动升级（独立频道），刷新约 6 秒</p>
         <esp-web-install-button manifest="old/manifest.json">
           <button slot="activate" class="btn btn2" type="button">安装老款屏固件</button>
           <span slot="unsupported"></span>
@@ -291,9 +291,9 @@
       .then(function (r) { return r.ok ? r.text() : ''; })
       .then(function (v) { v = (v || '').trim(); if (v) document.getElementById('ver').textContent = '固件 v' + v; })
       .catch(function () {});
-    fetch('old/version.txt', { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.text() : ''; })
-      .then(function (v) { v = (v || '').trim(); if (v) document.getElementById('verOld').textContent = 'v' + v; })
+    fetch('old/manifest.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (m) { if (m && m.version) document.getElementById('verOld').textContent = 'v' + m.version; })
       .catch(function () {});
   })();
 </script>

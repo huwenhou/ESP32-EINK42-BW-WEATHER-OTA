@@ -3,10 +3,10 @@
 // =====================================================================
 #pragma once
 
-// OTA：老款屏驱动与新款不同，绝不能从新款固件频道升级（会刷成黑屏），默认关闭
-#define ENABLE_OTA 0
-#define FW_BASE_URL     "https://io.huwenhou.com/ESP32-EINK42-BW-WEATHER-OLD-OTA"
-#define FW_FALLBACK_URL "https://huwenhou.github.io/ESP32-EINK42-BW-WEATHER-OLD-OTA"
+// OTA：老款屏驱动与新款不同，使用独立频道 /old/（绝不能从新款根目录升级，会刷成黑屏）
+#define ENABLE_OTA 1
+#define FW_BASE_URL     "https://io.huwenhou.com/ESP32-EINK42-BW-WEATHER-OTA/old"
+#define FW_FALLBACK_URL "https://huwenhou.github.io/ESP32-EINK42-BW-WEATHER-OTA/old"
 
 // 城市（顶栏显示名 + 经纬度）
 #define CITY_NAME "上海"
